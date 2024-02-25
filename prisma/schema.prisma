@@ -16,7 +16,7 @@ datasource db {
 model User {
   id Int @id @default(autoincrement())
   username String @unique @db.VarChar(30)
-  password String @db.VarChar(30)
+  password String @db.VarChar(100)
   name String @db.VarChar(30)
   surname String? @db.VarChar(30)
 
