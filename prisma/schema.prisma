@@ -1,0 +1,77 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("POSTGRES_URL")
+}
+
+model User {
+  id Int @id @default(autoincrement())
+  username String @unique @db.VarChar(30)
+  password String @db.VarChar(30)
+  name String @db.VarChar(30)
+  surname String? @db.VarChar(30)
+
+  createdTasks Task[]
+  assignedTasks TaskAssigment[]
+
+  comments Comment[]
+}
+
+model Task {
+  id Int @id @default(autoincrement())
+  title String @db.VarChar(40)
+  description String? @db.Text
+  isCompleted Boolean @db.Boolean @default(false)
+  completedAt DateTime? @db.Timestamp()
+
+  assignedUsers TaskAssigment[]
+
+  userId Int @unique
+  createdBy User @relation(fields: [userId], references: [id])
+
+  comments Comment[]
+  todos todo[]
+}
+
+model TaskAssigment {
+  userId Int
+  user User @relation(fields: [userId], references: [id])
+
+  taskId Int
+  task Task @relation(fields: [taskId], references: [id])
+
+  @@id([userId, taskId])
+}
+
+model Comment {
+  id Int @id @default(autoincrement())
+  message String @db.Text
+  createdAt DateTime @db.Timestamp()
+
+  taskId Int @unique
+  task Task @relation(fields: [taskId], references: [id])
+
+  userId Int @unique
+  user User @relation(fields: [userId], references: [id])
+
+}
+
+model todo {
+  id Int @id @default(autoincrement())
+  description String @db.VarChar(100)
+  isCompleted Boolean @db.Boolean @default(false)
+  completedAt DateTime? @db.Timestamp()
+
+  taskId Int @unique
+  task Task @relation(fields: [taskId], references: [id])
+
+}
