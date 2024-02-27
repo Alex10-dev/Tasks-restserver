@@ -35,7 +35,7 @@ model Task {
 
   assignedUsers TaskAssigment[]
 
-  userId Int @unique
+  userId Int
   createdBy User @relation(fields: [userId], references: [id])
 
   comments Comment[]
