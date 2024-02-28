@@ -14,6 +14,7 @@ export class TaskRoutes {
 
         router.get('/', [ AuthMiddleware.validateJWT ], taskController.getTasks);
         router.post('/', [ AuthMiddleware.validateJWT ], taskController.createTasks);
+        router.put('/update/:id', [ AuthMiddleware.validateJWT ], taskController.updateTask);
 
         return router;
     }

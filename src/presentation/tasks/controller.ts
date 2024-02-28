@@ -3,6 +3,7 @@ import { TaskService } from "../services/task.service";
 import { CreateTaskDTO } from "../../domain/dtos/tasks/create-task.dto";
 import { CustomError } from "../../domain/errors/custom.error";
 import { PaginationDTO } from "../../domain/dtos/shared/pagination.dto";
+import { UpdateTaskDTO } from "../../domain/dtos/tasks/update-task.dto";
 
 export class TaskController {
 
@@ -34,4 +35,17 @@ export class TaskController {
             .then( task => res.status(200).json( task ))
             .catch( error => CustomError.handleError( error, res ));
     };
+
+    public updateTask = ( req: Request, res: Response ) => {
+
+        const {id} = req.params;
+
+        const [ error, updateTaskDTO ] = UpdateTaskDTO.create( req.body );
+        if( error ) return res.status(400).json( error );
+
+        //console.log( updateTaskDTO!.getDataToUpdate() );
+        this.taskService.updateTaskData( Number(id), updateTaskDTO! )
+            .then( updatedTask => res.status(200).json( updatedTask ))
+            .catch( error => CustomError.handleError( error, res ));
+    }
 }

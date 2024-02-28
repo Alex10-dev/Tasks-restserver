@@ -1,6 +1,7 @@
 import { prisma } from "../../data/postgres";
 import { PaginationDTO } from "../../domain/dtos/shared/pagination.dto";
 import { CreateTaskDTO } from "../../domain/dtos/tasks/create-task.dto";
+import { UpdateTaskDTO } from "../../domain/dtos/tasks/update-task.dto";
 import { UserEntity } from "../../domain/entities/user.entity";
 import { CustomError } from "../../domain/errors/custom.error";
 
@@ -73,6 +74,26 @@ export class TaskService {
                 })
             }
 
+        } catch( error ){
+            throw CustomError.internalServer('Internal Server Erorr');
+        }
+    };
+
+    async updateTaskData( taskId: number, updateTaskDTO: UpdateTaskDTO ){
+
+        const taskExist = await prisma.task.findUnique({
+            where: { id: taskId }
+        });
+        if( !taskExist ) throw CustomError.badRequest(`Task with id: ${ taskId } doesn't exist`);
+
+        // console.log( updateTaskDTO.getDataToUpdate() );
+        try{
+            const updatedTask = await prisma.task.update({
+                where: { id: taskId },
+                data: { ...updateTaskDTO.getDataToUpdate() }
+            });
+
+            return updatedTask;
         } catch( error ){
             throw CustomError.internalServer('Internal Server Erorr');
         }
