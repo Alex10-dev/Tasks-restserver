@@ -1,4 +1,5 @@
 import { prisma } from "../../data/postgres";
+import { PaginationDTO } from "../../domain/dtos/shared/pagination.dto";
 import { CreateTaskDTO } from "../../domain/dtos/tasks/create-task.dto";
 import { UserEntity } from "../../domain/entities/user.entity";
 import { CustomError } from "../../domain/errors/custom.error";
@@ -13,7 +14,7 @@ export class TaskService {
         });
         if( !userExist ) throw CustomError.badRequest(`User with id: ${ createTaskDTO.assignedTo } doesn't exist`);
 
-        console.log(createTaskDTO!);
+        // console.log(createTaskDTO!);
         try{
             const task = await prisma.task.create({
                 data: {
@@ -24,7 +25,6 @@ export class TaskService {
                     userId: user.id 
                 }
             });
-            console.log( task);
 
             const taskAssigment = await prisma.taskAssigment.create({
                 data: {
@@ -33,14 +33,48 @@ export class TaskService {
                 }
             });
 
-            console.log('se crean');
             return {
                 newTask: {...task},
-                assignedTo: {...taskAssigment}
+                assignedTo: taskAssigment.userId
             };
 
         } catch( error ){
             throw CustomError.internalServer(`${ error }`);
+        }
+    };
+
+    async getTasks( pagination: PaginationDTO ){
+
+        const skip = (pagination.page - 1) * (pagination.limit);
+        try{
+
+            const [total, tasks] = await Promise.all([
+                await prisma.task.count(),
+                await prisma.task.findMany({
+                    skip: skip,
+                    take: pagination.limit
+                }),
+            ]);
+
+            return {
+                page: pagination.page,
+                limit: pagination.limit,
+                total: total,
+
+                next: ( (pagination.page * pagination.limit) < total ) 
+                    ? `/api/tasks?page=${ pagination.page + 1}&limit=${ pagination.limit }`
+                    : null,
+                prev: ( pagination.page - 1 > 0 ) 
+                    ? `/api/tasks?page=${ pagination.page - 1}&limit=${ pagination.limit }`
+                    : null,
+
+                tasks: tasks.map( task => {
+                    return {...task};
+                })
+            }
+
+        } catch( error ){
+            throw CustomError.internalServer('Internal Server Erorr');
         }
     }
 }
