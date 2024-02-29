@@ -1,5 +1,6 @@
 import { prisma } from "../../data/postgres";
 import { PaginationDTO } from "../../domain/dtos/shared/pagination.dto";
+import { AddUserToTaskDTO } from "../../domain/dtos/tasks/add-user-task.dto";
 import { CreateTaskDTO } from "../../domain/dtos/tasks/create-task.dto";
 import { UpdateTaskDTO } from "../../domain/dtos/tasks/update-task.dto";
 import { UserEntity } from "../../domain/entities/user.entity";
@@ -97,5 +98,48 @@ export class TaskService {
         } catch( error ){
             throw CustomError.internalServer('Internal Server Erorr');
         }
+    }
+
+    async addUserToTask( taskId: number, addUserToTaskDTO: AddUserToTaskDTO ){
+
+        let taskExist = null;
+        let userAdded = null;
+        let userExist = null;
+        try{
+            [taskExist, userAdded, userExist] = await Promise.all([
+                await prisma.task.findUnique({ where: { id: taskId } }),
+                await prisma.taskAssigment.findFirst({
+                    where: { taskId: taskId, userId: addUserToTaskDTO.assignedTo }
+                }),
+                await prisma.user.findUnique({
+                    where: { id: addUserToTaskDTO.assignedTo }
+                }),
+            ]);
+
+        } catch( error ){
+            throw CustomError.internalServer('Internal Server Error');
+        }
+
+        if( !userExist ) throw CustomError.badRequest(`User with id: ${ addUserToTaskDTO.assignedTo } doesn't exist`);
+        if( !taskExist ) throw CustomError.badRequest(`Task with id: ${ taskId } doesn't exist`);
+        if( userAdded ) throw CustomError.badRequest(`The user with id: ${ addUserToTaskDTO.assignedTo } was already assigned to the task`);
+
+        try{
+            await prisma.taskAssigment.create({
+                data: {
+                    userId: addUserToTaskDTO.assignedTo,
+                    taskId: taskId,
+                }
+            });
+
+            return {
+                task: { ...taskExist },
+                userAssigned: addUserToTaskDTO.assignedTo
+            }
+        } catch( error ){
+            throw CustomError.internalServer('Internal Server Error');
+        }
+
+
     }
 }
