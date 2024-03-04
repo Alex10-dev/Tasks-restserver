@@ -1,10 +1,11 @@
 import { prisma } from "../../data/postgres";
 import { PaginationDTO } from "../../domain/dtos/shared/pagination.dto";
-import { AddUserToTaskDTO } from "../../domain/dtos/tasks/add-user-task.dto";
+import { UserAssigmentTaskDTO } from "../../domain/dtos/tasks/user-assigment-task.dto";
 import { CreateTaskDTO } from "../../domain/dtos/tasks/create-task.dto";
 import { UpdateTaskDTO } from "../../domain/dtos/tasks/update-task.dto";
 import { UserEntity } from "../../domain/entities/user.entity";
 import { CustomError } from "../../domain/errors/custom.error";
+import { DeleteTaskDTO } from "../../domain/dtos/tasks/delete-task.dto";
 
 export class TaskService {
 
@@ -100,7 +101,7 @@ export class TaskService {
         }
     }
 
-    async addUserToTask( taskId: number, addUserToTaskDTO: AddUserToTaskDTO ){
+    async addUserToTask( taskId: number, addUserToTaskDTO: UserAssigmentTaskDTO ){
 
         let taskExist = null;
         let userAdded = null;
@@ -139,7 +140,100 @@ export class TaskService {
         } catch( error ){
             throw CustomError.internalServer('Internal Server Error');
         }
+    };
 
+    async unAssignUserFromTask( taskId: number, userAssigmentTaskDTO: UserAssigmentTaskDTO ){
 
+        let taskExist = null;
+        let userAssigned = null;
+        let userExist = null;
+        try{
+            [taskExist, userAssigned, userExist] = await Promise.all([
+                await prisma.task.findUnique({ where: { id: taskId } }),
+                await prisma.taskAssigment.findFirst({
+                    where: { taskId: taskId, userId: userAssigmentTaskDTO.assignedTo }
+                }),
+                await prisma.user.findUnique({
+                    where: { id: userAssigmentTaskDTO.assignedTo }
+                }),
+            ]);
+        } catch( error ){
+            throw CustomError.internalServer('Internal Server Error');
+        }
+
+        if( !userExist ) throw CustomError.badRequest(`User with id: ${ userAssigmentTaskDTO.assignedTo } doesn't exist`);
+        if( !taskExist ) throw CustomError.badRequest(`Task with id: ${ taskId } doesn't exist`);
+        if( !userAssigned ) throw CustomError.badRequest(`The user with id: ${ userAssigmentTaskDTO.assignedTo } isn't assigned to the task`);
+
+        try{
+            await prisma.taskAssigment.delete({
+                where: {
+                    userId_taskId: {
+                        userId: userAssigmentTaskDTO.assignedTo,
+                        taskId: taskId,
+                    }
+                }
+            });
+
+            return {
+                taskId: { ...taskExist },
+                unassignedUser: userAssigmentTaskDTO.assignedTo
+            }
+        } catch( error ){
+            throw CustomError.internalServer('Internal Server Error');
+        }
+    };
+
+    async deleteTask( deleteTaskDTO: DeleteTaskDTO ){
+
+        const taskId = deleteTaskDTO.id;
+        let taskExist = null;
+        let assigmentsExist = null;
+        let hasAssigments = false;
+        try{
+            [taskExist, assigmentsExist] = await Promise.all([
+                await prisma.task.findUnique({ where: { id: taskId } }),
+                await prisma.taskAssigment.findMany({ where: { taskId: taskId } }),
+            ]);
+
+        } catch( error ){
+            throw CustomError.internalServer('Internal Server Error');
+        }
+
+        if( !taskExist ) throw CustomError.badRequest(`Task with id: ${ taskId } doesn't exist`);
+        ( assigmentsExist ) ? hasAssigments = true : hasAssigments = false; 
+
+        try{
+            const [ deletedAssigments, deletedTask] = await this.deleteTaskAndAssigments( taskId, hasAssigments );
+            return { deletedAssigments, deletedTask };
+        } catch( error ){
+            throw CustomError.internalServer('Internal Server Error');
+        }
+    }
+
+    private async deleteTaskAndAssigments(taskId: number, hasAssigments: boolean ) {
+    
+        let deleteAssigmentsPromise;
+        if( hasAssigments ){
+            deleteAssigmentsPromise = prisma.taskAssigment.deleteMany({
+                where: { taskId: taskId }
+            })
+        };
+
+        const deleteTaskPromise = prisma.task.delete({
+            where: {id: taskId}
+        });
+
+        try{
+            const [deletedAssigments, deletedTask] = await Promise.all([
+                deleteAssigmentsPromise,
+                deleteTaskPromise,
+            ]);
+
+            return [deletedAssigments, deletedTask];
+
+        } catch( error ){
+            throw CustomError.internalServer('Internal Server Error');
+        }
     }
 }

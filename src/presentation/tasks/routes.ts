@@ -16,7 +16,9 @@ export class TaskRoutes {
         router.post('/', [ AuthMiddleware.validateJWT ], taskController.createTasks);
         router.put('/update/:id', [ AuthMiddleware.validateJWT ], taskController.updateTask);
         router.put('/assign-user/:id', [ AuthMiddleware.validateJWT ], taskController.assignUserToTask);
+        router.put('/unassign-user/:id', [ AuthMiddleware.validateJWT ], taskController.unassignUserFromTask);
 
+        router.delete('/:id', [ AuthMiddleware.validateJWT ], taskController.deleteTask);
         return router;
     }
 }

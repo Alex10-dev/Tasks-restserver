@@ -4,7 +4,8 @@ import { CreateTaskDTO } from "../../domain/dtos/tasks/create-task.dto";
 import { CustomError } from "../../domain/errors/custom.error";
 import { PaginationDTO } from "../../domain/dtos/shared/pagination.dto";
 import { UpdateTaskDTO } from "../../domain/dtos/tasks/update-task.dto";
-import { AddUserToTaskDTO } from "../../domain/dtos/tasks/add-user-task.dto";
+import { UserAssigmentTaskDTO } from "../../domain/dtos/tasks/user-assigment-task.dto";
+import { DeleteTaskDTO } from "../../domain/dtos/tasks/delete-task.dto";
 
 export class TaskController {
 
@@ -53,11 +54,33 @@ export class TaskController {
     public assignUserToTask = ( req: Request, res: Response ) => {
 
         const {id} = req.params;
-        const [ error, addUserToTaskDTO ] = AddUserToTaskDTO.create( req.body );
+        const [ error, userAssigmentTaskDTO ] = UserAssigmentTaskDTO.create( req.body );
         if( error ) return res.status(400).json({ error });
 
-        this.taskService.addUserToTask( Number(id), addUserToTaskDTO! )
+        this.taskService.addUserToTask( Number(id), userAssigmentTaskDTO! )
             .then( assignedUser => res.status(200).json( assignedUser ))
             .catch( error => CustomError.handleError( error, res ));
-    }
+    };
+
+    public unassignUserFromTask = ( req: Request, res: Response ) => {
+
+        const { id } = req.params;
+        const [error, userAssigmentTaskDTO ] = UserAssigmentTaskDTO.create( req.body );
+        if( error ) return res.status(400).json({ error });
+
+        this.taskService.unAssignUserFromTask( Number(id), userAssigmentTaskDTO! )
+            .then( unassignedUser => res.status(200).json( unassignedUser ))
+            .catch( error => CustomError.handleError( error, res ));
+    };
+
+    public deleteTask = ( req: Request, res: Response ) => {
+
+        const {id} = req.params;
+        const [ error, deleteTaskDTO] = DeleteTaskDTO.create( Number(id) );
+        if( error ) return res.status(400).json({ error });
+
+       this.taskService.deleteTask( deleteTaskDTO! )
+            .then( deletedTask => res.status(200).json( deletedTask ))
+            .catch( error => CustomError.handleError( error, res ));
+    };
 }
