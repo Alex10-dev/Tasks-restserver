@@ -57,10 +57,10 @@ model Comment {
   message String @db.Text
   createdAt DateTime @db.Timestamp()
 
-  taskId Int @unique
+  taskId Int
   task Task @relation(fields: [taskId], references: [id])
 
-  userId Int @unique
+  userId Int
   user User @relation(fields: [userId], references: [id])
 
 }
@@ -71,7 +71,7 @@ model todo {
   isCompleted Boolean @db.Boolean @default(false)
   completedAt DateTime? @db.Timestamp()
 
-  taskId Int @unique
+  taskId Int
   task Task @relation(fields: [taskId], references: [id])
 
 }

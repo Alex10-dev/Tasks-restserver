@@ -12,11 +12,11 @@ export class TaskService {
     constructor(){};
 
     async createTask( createTaskDTO: CreateTaskDTO, user: UserEntity ) {
-        const userExist = await prisma.user.findUnique({
+        /*const userExist = await prisma.user.findUnique({
             where: { id: createTaskDTO.assignedTo }
         });
         if( !userExist ) throw CustomError.badRequest(`User with id: ${ createTaskDTO.assignedTo } doesn't exist`);
-
+*/
         // console.log(createTaskDTO!);
         try{
             const task = await prisma.task.create({
@@ -29,16 +29,16 @@ export class TaskService {
                 }
             });
 
-            const taskAssigment = await prisma.taskAssigment.create({
+            /*const taskAssigment = await prisma.taskAssigment.create({
                 data: {
                     userId: createTaskDTO.assignedTo,
                     taskId: task.id
                 }
-            });
+            });*/
 
             return {
                 newTask: {...task},
-                assignedTo: taskAssigment.userId
+                // assignedTo: taskAssigment.userId
             };
 
         } catch( error ){
