@@ -55,7 +55,10 @@ export class TaskService {
                 await prisma.task.count(),
                 await prisma.task.findMany({
                     skip: skip,
-                    take: pagination.limit
+                    take: pagination.limit,
+                    include: {
+                        todos: true,
+                    }
                 }),
             ]);
 

@@ -3,6 +3,7 @@ import { TaskRoutes } from "./tasks/routes";
 import { UserRoutes } from "./users/routes";
 import { AuthRoutes } from "./auth/routes";
 import { TodoRoutes } from "./todos/routes";
+import { FileUploadRoutes } from "./file-upload/routes";
 
 
 export class AppRoutes {
@@ -15,6 +16,7 @@ export class AppRoutes {
         router.use('/api/users', UserRoutes.routes);
         router.use('/api/auth', AuthRoutes.routes);
         router.use('/api/todos', TodoRoutes.routes);
+        router.use('/api/upload', FileUploadRoutes.routes);
 
         return router;
     }
