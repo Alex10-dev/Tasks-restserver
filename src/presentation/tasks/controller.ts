@@ -21,6 +21,8 @@ export class TaskController {
         const [ error, paginationDTO] = PaginationDTO.create( Number(page), Number(limit) );
         if( error ) return res.status(400).json({ error });
 
+        console.log('testing something');
+
         this.taskService.getTasks( paginationDTO! )
             .then( tasks => res.status(200).json( tasks ))
             .catch( error => CustomError.handleError( error, res ));
